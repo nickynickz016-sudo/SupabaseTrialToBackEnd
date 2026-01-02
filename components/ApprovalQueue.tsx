@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Job, JobStatus, Personnel, Vehicle } from '../types';
+import { Job, JobStatus, Personnel, Vehicle, UserProfile } from '../types';
 import { Check, X, User, AlertTriangle, Truck, Users, Layout } from 'lucide-react';
 
 interface ApprovalQueueProps {
@@ -9,9 +9,10 @@ interface ApprovalQueueProps {
   isAdmin: boolean;
   personnel: Personnel[];
   vehicles: Vehicle[];
+  users: UserProfile[];
 }
 
-export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ jobs, onApproval, isAdmin, personnel, vehicles }) => {
+export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ jobs, onApproval, isAdmin, personnel, vehicles, users }) => {
   const [allocatingJobId, setAllocatingJobId] = useState<string | null>(null);
   const [allocation, setAllocation] = useState({
     team_leader: '',
@@ -61,42 +62,45 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ jobs, onApproval, 
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {pendingJobs.map((job) => (
-          <div key={job.id} className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-10 hover:shadow-md transition-shadow">
-            <div className="flex-1">
-              <div className="flex items-center gap-4 mb-4">
-                <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                  job.status === JobStatus.PENDING_ADD ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-rose-50 text-rose-600 border border-rose-100'
-                }`}>
-                  {job.status === JobStatus.PENDING_ADD ? 'Authorization Request' : 'Removal Request'}
-                </span>
-                <span className="text-xs text-slate-400 font-bold tracking-widest uppercase">ID: {job.id}</span>
+        {pendingJobs.map((job) => {
+          const requester = users.find(u => u.employee_id === job.requester_id);
+          return (
+            <div key={job.id} className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-10 hover:shadow-md transition-shadow">
+              <div className="flex-1">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                    job.status === JobStatus.PENDING_ADD ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-rose-50 text-rose-600 border border-rose-100'
+                  }`}>
+                    {job.status === JobStatus.PENDING_ADD ? 'Authorization Request' : 'Removal Request'}
+                  </span>
+                  <span className="text-xs text-slate-400 font-bold tracking-widest uppercase">ID: {job.id}</span>
+                </div>
+                <h4 className="text-2xl font-bold text-slate-800 mb-2">{job.shipper_name}</h4>
+                <p className="text-sm text-slate-500 font-medium">{job.location} • {job.loading_type} • {job.volume_cbm} CBM</p>
+                
+                <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-6">
+                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1.5">Scheduled Time</p>
+                      <p className="text-sm font-bold text-slate-800">{job.job_time}</p>
+                   </div>
+                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1.5">Requester</p>
+                      <p className="text-sm font-bold text-slate-800">{requester ? requester.name : `ID #${job.requester_id}`}</p>
+                   </div>
+                </div>
               </div>
-              <h4 className="text-2xl font-bold text-slate-800 mb-2">{job.shipper_name}</h4>
-              <p className="text-sm text-slate-500 font-medium">{job.location} • {job.loading_type} • {job.volume_cbm} CBM</p>
-              
-              <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-6">
-                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1.5">Scheduled Time</p>
-                    <p className="text-sm font-bold text-slate-800">{job.job_time}</p>
-                 </div>
-                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1.5">Requester</p>
-                    <p className="text-sm font-bold text-slate-800">User ID #{job.requester_id}</p>
-                 </div>
-              </div>
-            </div>
 
-            <div className="flex gap-4 shrink-0">
-               <button onClick={() => onApproval(job.id, false)} className="p-6 rounded-3xl bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all border border-slate-200">
-                 <X className="w-8 h-8" />
-               </button>
-               <button onClick={() => startApproval(job)} className="p-6 rounded-3xl bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-xl shadow-blue-100">
-                 <Check className="w-8 h-8" />
-               </button>
+              <div className="flex gap-4 shrink-0">
+                 <button onClick={() => onApproval(job.id, false)} className="p-6 rounded-3xl bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all border border-slate-200">
+                   <X className="w-8 h-8" />
+                 </button>
+                 <button onClick={() => startApproval(job)} className="p-6 rounded-3xl bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-xl shadow-blue-100">
+                   <Check className="w-8 h-8" />
+                 </button>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
         {pendingJobs.length === 0 && (
           <div className="p-32 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center shadow-sm mx-auto mb-6">

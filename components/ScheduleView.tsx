@@ -12,13 +12,14 @@ interface ScheduleViewProps {
   currentUser: UserProfile;
   personnel: Personnel[];
   vehicles: Vehicle[];
+  users: UserProfile[];
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
 const CATEGORIES: MainCategory[] = ['Commercial', 'Agent', 'Private', 'Corporate'];
 
 export const ScheduleView: React.FC<ScheduleViewProps> = ({ 
-  jobs, onAddJob, onDeleteJob, onUpdateAllocation, onToggleLock, currentUser, personnel, vehicles 
+  jobs, onAddJob, onDeleteJob, onUpdateAllocation, onToggleLock, currentUser, personnel, vehicles, users 
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [showAllocationModal, setShowAllocationModal] = useState<Job | null>(null);
@@ -178,66 +179,73 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                             Available Slot
                          </div>
                        )}
-                       {hourJobs.map((job) => (
-                         <div key={job.id} className={`min-w-[340px] max-w-sm rounded-2xl p-6 border shadow-sm hover:shadow-md transition-all bg-white relative group/job ${job.is_locked ? 'border-amber-200 bg-amber-50/10' : 'border-slate-200'}`}>
-                            <div className="flex justify-between items-start mb-4">
-                               <div>
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">ID: {job.id}</p>
-                                    {job.is_locked && <Lock className="w-3 h-3 text-amber-500" />}
-                                  </div>
-                                  <h4 className="font-bold text-base text-slate-800 leading-tight truncate">{job.shipper_name}</h4>
-                               </div>
-                               <div className="flex gap-2">
-                                  {currentUser.role === UserRole.ADMIN && (
-                                    <>
-                                      <button 
-                                        onClick={() => onToggleLock(job.id)}
-                                        className={`p-1.5 rounded-lg transition-all ${job.is_locked ? 'text-amber-600 bg-amber-50' : 'text-slate-400 hover:bg-slate-100'}`}
-                                      >
-                                        {job.is_locked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-                                      </button>
-                                      <button 
-                                        onClick={() => openAllocationEditor(job)}
-                                        className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-all"
-                                      >
-                                        <Settings2 className="w-4 h-4" />
-                                      </button>
-                                    </>
-                                  )}
-                                  <button 
-                                    onClick={() => onDeleteJob(job.id)} 
-                                    className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-300 hover:text-rose-500 transition-all opacity-0 group-hover/job:opacity-100"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                               </div>
-                            </div>
-                            <div className="space-y-3 mb-4">
-                               <div className="flex flex-col gap-1">
-                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                                    <Users className="w-3 h-3" /> Crew Allocation
-                                  </span>
-                                  <div className="flex flex-col gap-0.5">
-                                    <span className="text-xs font-bold text-slate-700">
-                                      {job.team_leader ? `TL: ${job.team_leader}` : 'No TL assigned'}
-                                    </span>
-                                    {job.writer_crew && job.writer_crew.length > 0 && (
-                                      <span className="text-[10px] text-slate-500 font-medium">
-                                        Crew: {job.writer_crew.join(', ')}
-                                      </span>
+                       {hourJobs.map((job) => {
+                         const requester = users.find(u => u.employee_id === job.requester_id);
+                         return (
+                           <div key={job.id} className={`min-w-[340px] max-w-sm rounded-2xl p-6 border shadow-sm hover:shadow-md transition-all bg-white relative group/job ${job.is_locked ? 'border-amber-200 bg-amber-50/10' : 'border-slate-200'}`}>
+                              <div className="flex justify-between items-start mb-4">
+                                 <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">ID: {job.id}</p>
+                                      {job.is_locked && <Lock className="w-3 h-3 text-amber-500" />}
+                                    </div>
+                                    <h4 className="font-bold text-base text-slate-800 leading-tight truncate">{job.shipper_name}</h4>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                      <User className="w-3 h-3 text-slate-400" />
+                                      <span className="text-[10px] text-slate-500 font-bold">{requester ? requester.name : job.requester_id}</span>
+                                    </div>
+                                 </div>
+                                 <div className="flex gap-2">
+                                    {currentUser.role === UserRole.ADMIN && (
+                                      <>
+                                        <button 
+                                          onClick={() => onToggleLock(job.id)}
+                                          className={`p-1.5 rounded-lg transition-all ${job.is_locked ? 'text-amber-600 bg-amber-50' : 'text-slate-400 hover:bg-slate-100'}`}
+                                        >
+                                          {job.is_locked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                                        </button>
+                                        <button 
+                                          onClick={() => openAllocationEditor(job)}
+                                          className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-all"
+                                        >
+                                          <Settings2 className="w-4 h-4" />
+                                        </button>
+                                      </>
                                     )}
-                                  </div>
-                               </div>
-                               <div className="flex flex-col gap-1">
-                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                                    <Truck className="w-3 h-3" /> Vehicle Details
-                                  </span>
-                                  <span className="text-xs font-bold text-slate-700">{job.vehicle || 'No vehicle dispatched'}</span>
-                               </div>
-                            </div>
-                         </div>
-                       ))}
+                                    <button 
+                                      onClick={() => onDeleteJob(job.id)} 
+                                      className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-300 hover:text-rose-500 transition-all opacity-0 group-hover/job:opacity-100"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                 </div>
+                              </div>
+                              <div className="space-y-3 mb-4">
+                                 <div className="flex flex-col gap-1">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                      <Users className="w-3 h-3" /> Crew Allocation
+                                    </span>
+                                    <div className="flex flex-col gap-0.5">
+                                      <span className="text-xs font-bold text-slate-700">
+                                        {job.team_leader ? `TL: ${job.team_leader}` : 'No TL assigned'}
+                                      </span>
+                                      {job.writer_crew && job.writer_crew.length > 0 && (
+                                        <span className="text-[10px] text-slate-500 font-medium">
+                                          Crew: {job.writer_crew.join(', ')}
+                                        </span>
+                                      )}
+                                    </div>
+                                 </div>
+                                 <div className="flex flex-col gap-1">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                      <Truck className="w-3 h-3" /> Vehicle Details
+                                    </span>
+                                    <span className="text-xs font-bold text-slate-700">{job.vehicle || 'No vehicle dispatched'}</span>
+                                 </div>
+                              </div>
+                           </div>
+                         )
+                       })}
                     </div>
                  </div>
                );
@@ -257,83 +265,90 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                   </tr>
                </thead>
                <tbody className="divide-y divide-slate-100">
-                  {filteredJobs.map(job => (
-                    <tr key={job.id} className={`hover:bg-slate-50/50 transition-colors group ${job.is_locked ? 'bg-amber-50/5' : ''}`}>
-                       <td className="p-6 text-sm font-bold text-blue-600">
-                          <div className="flex items-center gap-2">
-                            {job.id}
-                            {job.is_locked && <Lock className="w-3 h-3 text-amber-500" />}
-                          </div>
-                       </td>
-                       <td className="p-6">
-                         <div className="flex flex-col">
-                            <span className="text-sm font-bold text-slate-800">{job.shipper_name}</span>
-                            <span className="text-[10px] text-slate-400 font-medium uppercase truncate max-w-[200px]">{job.location}</span>
-                         </div>
-                       </td>
-                       <td className="p-6">
-                          <div className="flex flex-col">
-                            <span className="text-xs font-bold uppercase text-slate-500">{job.main_category}</span>
-                            <span className="text-[10px] font-bold text-slate-400">{job.job_time}</span>
-                          </div>
-                       </td>
-                       <td className="p-6">
-                         <div className="flex flex-col gap-2">
-                            <div className="flex items-start gap-1.5">
-                              <User className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
-                              <div className="flex flex-col">
-                                <span className="text-[10px] font-bold text-slate-700">
-                                  {job.team_leader ? `Leader: ${job.team_leader}` : 'Unassigned'}
-                                </span>
-                                {job.writer_crew && job.writer_crew.length > 0 && (
-                                  <span className="text-[10px] text-slate-500 font-medium leading-tight">
-                                    Crew: {job.writer_crew.join(', ')}
-                                  </span>
-                                )}
+                  {filteredJobs.map(job => {
+                    const requester = users.find(u => u.employee_id === job.requester_id);
+                    return (
+                      <tr key={job.id} className={`hover:bg-slate-50/50 transition-colors group ${job.is_locked ? 'bg-amber-50/5' : ''}`}>
+                         <td className="p-6 text-sm font-bold text-blue-600">
+                            <div className="flex items-center gap-2">
+                              {job.id}
+                              {job.is_locked && <Lock className="w-3 h-3 text-amber-500" />}
+                            </div>
+                         </td>
+                         <td className="p-6">
+                           <div className="flex flex-col">
+                              <span className="text-sm font-bold text-slate-800">{job.shipper_name}</span>
+                              <span className="text-[10px] text-slate-400 font-medium uppercase truncate max-w-[200px]">{job.location}</span>
+                              <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-slate-100">
+                                <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <span className="text-[10px] text-slate-500 font-bold">{requester ? requester.name : job.requester_id}</span>
                               </div>
+                           </div>
+                         </td>
+                         <td className="p-6">
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold uppercase text-slate-500">{job.main_category}</span>
+                              <span className="text-[10px] font-bold text-slate-400">{job.job_time}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 border-t border-slate-50 pt-1 mt-1">
-                              <Truck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              <span className="text-[10px] text-slate-500 font-bold">{job.vehicle || 'No vehicle'}</span>
-                            </div>
-                         </div>
-                       </td>
-                       <td className="p-6">
-                         <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase ${
-                           job.status === JobStatus.ACTIVE ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'
-                         }`}>
-                           {job.status}
-                         </span>
-                       </td>
-                       <td className="p-6">
-                         <div className="flex items-center justify-center gap-2">
-                           {currentUser.role === UserRole.ADMIN && (
-                             <>
-                               <button 
-                                 onClick={() => onToggleLock(job.id)}
-                                 className={`p-2 rounded-xl transition-all ${job.is_locked ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200'}`}
-                               >
-                                 {job.is_locked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-                               </button>
-                               <button 
-                                 onClick={() => openAllocationEditor(job)}
-                                 className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all shadow-sm"
-                               >
-                                  <Settings2 className="w-4 h-4" />
-                               </button>
-                             </>
-                           )}
-                           <button 
-                             onClick={() => onDeleteJob(job.id)}
-                             disabled={job.is_locked && currentUser.role !== UserRole.ADMIN}
-                             className={`p-2 rounded-xl transition-all ${job.is_locked && currentUser.role !== UserRole.ADMIN ? 'opacity-20 cursor-not-allowed' : 'bg-rose-50 text-rose-300 hover:text-rose-600 hover:bg-rose-100'}`}
-                           >
-                              <Trash2 className="w-4 h-4" />
-                           </button>
-                         </div>
-                       </td>
-                    </tr>
-                  ))}
+                         </td>
+                         <td className="p-6">
+                           <div className="flex flex-col gap-2">
+                              <div className="flex items-start gap-1.5">
+                                <User className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] font-bold text-slate-700">
+                                    {job.team_leader ? `Leader: ${job.team_leader}` : 'Unassigned'}
+                                  </span>
+                                  {job.writer_crew && job.writer_crew.length > 0 && (
+                                    <span className="text-[10px] text-slate-500 font-medium leading-tight">
+                                      Crew: {job.writer_crew.join(', ')}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 border-t border-slate-50 pt-1 mt-1">
+                                <Truck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <span className="text-[10px] text-slate-500 font-bold">{job.vehicle || 'No vehicle'}</span>
+                              </div>
+                           </div>
+                         </td>
+                         <td className="p-6">
+                           <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase ${
+                             job.status === JobStatus.ACTIVE ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'
+                           }`}>
+                             {job.status}
+                           </span>
+                         </td>
+                         <td className="p-6">
+                           <div className="flex items-center justify-center gap-2">
+                             {currentUser.role === UserRole.ADMIN && (
+                               <>
+                                 <button 
+                                   onClick={() => onToggleLock(job.id)}
+                                   className={`p-2 rounded-xl transition-all ${job.is_locked ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200'}`}
+                                 >
+                                   {job.is_locked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                                 </button>
+                                 <button 
+                                   onClick={() => openAllocationEditor(job)}
+                                   className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all shadow-sm"
+                                 >
+                                    <Settings2 className="w-4 h-4" />
+                                 </button>
+                               </>
+                             )}
+                             <button 
+                               onClick={() => onDeleteJob(job.id)}
+                               disabled={job.is_locked && currentUser.role !== UserRole.ADMIN}
+                               className={`p-2 rounded-xl transition-all ${job.is_locked && currentUser.role !== UserRole.ADMIN ? 'opacity-20 cursor-not-allowed' : 'bg-rose-50 text-rose-300 hover:text-rose-600 hover:bg-rose-100'}`}
+                             >
+                                <Trash2 className="w-4 h-4" />
+                             </button>
+                           </div>
+                         </td>
+                      </tr>
+                    )
+                  })}
                </tbody>
             </table>
           </div>

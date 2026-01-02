@@ -8,9 +8,10 @@ interface JobBoardProps {
   onAddJob: (job: Partial<Job>) => void;
   onDeleteJob: (jobId: string) => void;
   currentUser: UserProfile;
+  users: UserProfile[];
 }
 
-export const JobBoard: React.FC<JobBoardProps> = ({ jobs, onAddJob, onDeleteJob, currentUser }) => {
+export const JobBoard: React.FC<JobBoardProps> = ({ jobs, onAddJob, onDeleteJob, currentUser, users }) => {
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState('');
   const [newJob, setNewJob] = useState({ 
@@ -80,60 +81,68 @@ export const JobBoard: React.FC<JobBoardProps> = ({ jobs, onAddJob, onDeleteJob,
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredJobs.map((job) => (
-          <div key={job.id} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow group relative overflow-hidden">
-            {job.status === JobStatus.PENDING_ADD && (
-              <div className="absolute top-0 right-0 bg-orange-100 text-orange-600 text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase">
-                Awaiting Approval
-              </div>
-            )}
-            {job.status === JobStatus.PENDING_DELETE && (
-              <div className="absolute top-0 right-0 bg-red-100 text-red-600 text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase">
-                Removal Requested
-              </div>
-            )}
-            
-            <div className="flex items-start justify-between mb-4">
-              <div className={`text-[10px] font-bold px-2 py-1 rounded uppercase ${
-                job.priority === 'HIGH' ? 'bg-red-50 text-red-600' : 
-                job.priority === 'MEDIUM' ? 'bg-orange-50 text-orange-600' : 'bg-slate-50 text-slate-600'
-              }`}>
-                {job.priority} Priority
-              </div>
-              <button 
-                onClick={() => onDeleteJob(job.id)}
-                className="text-slate-300 hover:text-red-500 transition-colors p-1"
-                disabled={job.status === JobStatus.PENDING_DELETE}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-
-            <h4 className="font-bold text-slate-800 mb-1">{job.shipper_name}</h4>
-            <p className="text-xs font-medium text-slate-400 uppercase tracking-widest mb-4">Job No: {job.title}</p>
-            <p className="text-sm text-slate-500 mb-6 line-clamp-2">{job.description}</p>
-
-            <div className="space-y-3 pt-4 border-t border-slate-50">
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <MapPin className="w-3.5 h-3.5" />
-                <span>{job.location || 'N/A'}</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <Clock className="w-3.5 h-3.5" />
-                <span>{new Date(job.created_at).toLocaleDateString()}</span>
-              </div>
-            </div>
-
-            <div className="mt-6 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                 <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">
-                  {job.requester_id.substring(0, 2)}
+        {filteredJobs.map((job) => {
+          const requester = users.find(u => u.employee_id === job.requester_id);
+          
+          return (
+            <div key={job.id} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow group relative overflow-hidden">
+              {job.status === JobStatus.PENDING_ADD && (
+                <div className="absolute top-0 right-0 bg-orange-100 text-orange-600 text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase">
+                  Awaiting Approval
                 </div>
-                <span className="text-xs font-semibold text-slate-700">Req by: #{job.requester_id}</span>
+              )}
+              {job.status === JobStatus.PENDING_DELETE && (
+                <div className="absolute top-0 right-0 bg-red-100 text-red-600 text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase">
+                  Removal Requested
+                </div>
+              )}
+              
+              <div className="flex items-start justify-between mb-4">
+                <div className={`text-[10px] font-bold px-2 py-1 rounded uppercase ${
+                  job.priority === 'HIGH' ? 'bg-red-50 text-red-600' : 
+                  job.priority === 'MEDIUM' ? 'bg-orange-50 text-orange-600' : 'bg-slate-50 text-slate-600'
+                }`}>
+                  {job.priority} Priority
+                </div>
+                <button 
+                  onClick={() => onDeleteJob(job.id)}
+                  className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                  disabled={job.status === JobStatus.PENDING_DELETE}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+
+              <h4 className="font-bold text-slate-800 mb-1">{job.shipper_name}</h4>
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-widest mb-4">Job No: {job.title}</p>
+              <p className="text-sm text-slate-500 mb-6 line-clamp-2">{job.description}</p>
+
+              <div className="space-y-3 pt-4 border-t border-slate-50">
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>{job.location || 'N/A'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>{new Date(job.created_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                   {requester ? (
+                    <img src={requester.avatar} className="w-7 h-7 rounded-full border-2 border-slate-100" alt={requester.name} />
+                   ) : (
+                    <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">
+                      {job.requester_id.substring(0, 2)}
+                    </div>
+                   )}
+                  <span className="text-xs font-semibold text-slate-700">Req by: {requester ? requester.name : `#${job.requester_id}`}</span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* Modal */}

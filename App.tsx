@@ -314,6 +314,7 @@ const App: React.FC = () => {
                 currentUser={currentUser}
                 personnel={personnel}
                 vehicles={vehicles}
+                users={systemUsers}
               />
             )}
             {activeTab === 'job-board' && (
@@ -322,6 +323,7 @@ const App: React.FC = () => {
                 onAddJob={handleAddJob}
                 onDeleteJob={handleDeleteJob}
                 currentUser={currentUser}
+                users={systemUsers}
               />
             )}
             {activeTab === 'warehouse' && (
@@ -348,6 +350,7 @@ const App: React.FC = () => {
                 isAdmin={currentUser.role === UserRole.ADMIN}
                 personnel={personnel}
                 vehicles={vehicles}
+                users={systemUsers}
               />
             )}
             {activeTab === 'resources' && (
